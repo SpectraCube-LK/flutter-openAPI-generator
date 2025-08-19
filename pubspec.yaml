@@ -1,6 +1,6 @@
 name: flutter_openapi_generator
 description: A CLI tool to generate Flutter model classes and repository classes from OpenAPI JSON schema files
-version: 1.0.0
+version: 1.0.1
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
