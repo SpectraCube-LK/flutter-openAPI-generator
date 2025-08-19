@@ -16,4 +16,4 @@ dev_dependencies:
   lints: ^3.0.0
 
 executables:
-  flutter_openapi_generator: flutter_openapi_gen.dart
+  flutter_openapi_generator: flutter_openapi_generator.dart
