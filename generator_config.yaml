@@ -1,11 +1,12 @@
 api:
-  schema_path: "./samples/imos-api-schema.json"
+  schema_path: "https://api.swagger.spectracube.com/api/docs/imos"
   use_global_settings: true
   package_name: "imos"
   api_client_import: "lib/core/network/api_client.dart"
+
   
 output:
-  base_directory: "./lib/data"
+  base_directory: "lib/data/generated"
   models_path: "models"
   repositories_path: "repositories"
   
