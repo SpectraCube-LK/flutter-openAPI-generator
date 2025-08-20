@@ -113,24 +113,69 @@ class OpenApiParser {
   ModelProperty? _parseProperty(
       String name, Map<String, dynamic> schema, bool isRequired) {
     String type;
+    bool isNullable = !isRequired;
+
     if (schema.containsKey('\$ref')) {
       final ref = schema['\$ref'] as String;
       type = _resolveRefType(ref);
     } else {
+      // Check for OpenAPI 3.1.0 nullable patterns
+      if (schema['nullable'] == true) {
+        isNullable = true;
+      }
+
+      // Handle type arrays like ["integer", "null"]
+      if (schema['type'] is List) {
+        final typeArray = schema['type'] as List;
+        if (typeArray.contains('null')) {
+          isNullable = true;
+        }
+      }
+
+      // Handle anyOf/oneOf with null
+      if (schema.containsKey('anyOf') || schema.containsKey('oneOf')) {
+        final anyOf = schema['anyOf'] as List<dynamic>?;
+        final oneOf = schema['oneOf'] as List<dynamic>?;
+        final types = anyOf ?? oneOf ?? [];
+
+        for (final typeSchema in types) {
+          if (typeSchema is Map<String, dynamic> &&
+              typeSchema['type'] == 'null') {
+            isNullable = true;
+            break;
+          }
+        }
+      }
+
       type = _getDartType(schema);
     }
-    final isNullable =
-        !isRequired && (schema['nullable'] == true || type.endsWith('?'));
+
+    // Remove the ? suffix if it's already added by _getDartType
+    if (type.endsWith('?') && isNullable) {
+      // Type already has nullable suffix, don't add another
+    } else if (isNullable && !type.endsWith('?')) {
+      type = '$type?';
+    }
 
     return ModelProperty(
       name: name,
-      type: isNullable ? '$type?' : type,
+      type: type,
       isRequired: isRequired,
       description: schema['description'] ?? '',
     );
   }
 
   String _getDartType(Map<String, dynamic> schema) {
+    // Handle OpenAPI 3.1.0 union types (anyOf, oneOf, type arrays)
+    if (schema.containsKey('anyOf') || schema.containsKey('oneOf')) {
+      return _handleUnionTypes(schema);
+    }
+
+    // Handle type arrays like ["integer", "null"]
+    if (schema['type'] is List) {
+      return _handleTypeArray(schema['type'] as List);
+    }
+
     final type = schema['type'] as String?;
     final format = schema['format'] as String?;
 
@@ -175,6 +220,85 @@ class OpenApiParser {
       default:
         return 'dynamic';
     }
+  }
+
+  String _handleUnionTypes(Map<String, dynamic> schema) {
+    final anyOf = schema['anyOf'] as List<dynamic>?;
+    final oneOf = schema['oneOf'] as List<dynamic>?;
+
+    final types = anyOf ?? oneOf ?? [];
+    if (types.isEmpty) return 'dynamic';
+
+    // Find the primary type (non-null, non-object)
+    String? primaryType;
+    bool hasNull = false;
+
+    for (final typeSchema in types) {
+      if (typeSchema is Map<String, dynamic>) {
+        if (typeSchema['type'] == 'null') {
+          hasNull = true;
+        } else if (primaryType == null && typeSchema['type'] != 'object') {
+          primaryType = _getDartType(typeSchema);
+        }
+      }
+    }
+
+    if (primaryType == null) {
+      // If no clear primary type, use the first non-null type
+      for (final typeSchema in types) {
+        if (typeSchema is Map<String, dynamic> &&
+            typeSchema['type'] != 'null') {
+          primaryType = _getDartType(typeSchema);
+          break;
+        }
+      }
+    }
+
+    if (primaryType == null) return 'dynamic';
+
+    return hasNull ? '$primaryType?' : primaryType;
+  }
+
+  String _handleTypeArray(List<dynamic> typeArray) {
+    if (typeArray.isEmpty) return 'dynamic';
+
+    // Find the primary type (non-null)
+    String? primaryType;
+    bool hasNull = false;
+
+    for (final type in typeArray) {
+      if (type == 'null') {
+        hasNull = true;
+      } else if (primaryType == null && type is String) {
+        // Map OpenAPI types to Dart types
+        switch (type) {
+          case 'string':
+            primaryType = 'String';
+            break;
+          case 'integer':
+            primaryType = 'int';
+            break;
+          case 'number':
+            primaryType = 'double';
+            break;
+          case 'boolean':
+            primaryType = 'bool';
+            break;
+          case 'array':
+            primaryType = 'List<dynamic>';
+            break;
+          case 'object':
+            primaryType = 'Map<String, dynamic>';
+            break;
+          default:
+            primaryType = 'dynamic';
+        }
+      }
+    }
+
+    if (primaryType == null) return 'dynamic';
+
+    return hasNull ? '$primaryType?' : primaryType;
   }
 
   EndpointDefinition? _parseEndpointDefinition(

@@ -1,13 +1,13 @@
-# Flutter OpenAPI Code Generator
+# Flutter OpenAPI 3.1.0 Code Generator
 
-A CLI tool that generates Flutter model classes and repository classes from OpenAPI JSON schema files. The tool produces clean, production-ready Dart code following Flutter best practices.
+A CLI tool that generates Flutter model classes and repository classes from OpenAPI 3.1.0 JSON schema files. The tool produces clean, production-ready Dart code following Flutter best practices.
 
 ## Features
 
 - **Model Generation**: Creates immutable Dart classes with proper null safety
 - **Repository Generation**: Generates repository classes for API endpoints
 - **Configuration Support**: YAML configuration file for customization
-- **Flexible Input**: Supports local files and URLs for OpenAPI schemas
+- **Flexible Input**: Supports local files and URLs for OpenAPI 3.1.0 schemas
 - **Clean Code**: Generates lint-compliant, well-formatted Dart code
 - **Selective Generation**: Option to generate only models or repositories
 - **Package Integration**: Support for custom package names and API client imports
@@ -29,7 +29,7 @@ A CLI tool that generates Flutter model classes and repository classes from Open
 ### Basic Usage
 
 ```bash
-dart run bin/flutter_openapi_gen.dart -s ./samples/imos-api-schema.json -o ./lib/data
+dart run bin/flutter_openapi_gen.dart -s ./samples/api-schema.json -o ./lib/data
 ```
 
 ### Using Configuration File
@@ -40,7 +40,7 @@ dart run bin/flutter_openapi_gen.dart -c ./generator_config.yaml
 
 ### Command Line Options
 
-- `-s, --schema`: Path or URL to OpenAPI schema file
+- `-s, --schema`: Path or URL to OpenAPI 3.1.0 schema file
 - `-o, --output`: Output directory path
 - `-c, --config`: Configuration file path
 - `--models-only`: Generate only model classes
@@ -53,13 +53,13 @@ Create a `generator_config.yaml` file to customize the generation:
 
 ```yaml
 api:
-  schema_path: "./samples/imos-api-schema.json"
+  schema_path: "./samples/api-schema.json"
   use_global_settings: true
-  package_name: "imos"
+  package_name: "package_name"
   api_client_import: "lib/core/network/api_client.dart"
   
 output:
-  base_directory: "./lib/data"
+  base_directory: "./lib/data/generated"
   models_path: "models"
   repositories_path: "repositories"
   
@@ -81,7 +81,7 @@ features:
 ### Configuration Options
 
 #### API Configuration
-- `schema_path`: Path to OpenAPI schema file
+- `schema_path`: Path to OpenAPI 3.1.0 schema file
 - `use_global_settings`: Whether to use global settings from the schema
 - `package_name`: Custom package name for generated code
 - `api_client_import`: Import path for custom API client
@@ -211,7 +211,7 @@ class UsersRepository {
 
 ## Data Type Mapping
 
-The tool maps OpenAPI types to Dart types:
+The tool maps OpenAPI 3.1.0 types to Dart types:
 
 | OpenAPI Type | Dart Type |
 |--------------|-----------|
